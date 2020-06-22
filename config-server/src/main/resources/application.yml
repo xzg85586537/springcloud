@@ -15,8 +15,8 @@ spring:
     config:
       server:
         git:
-          uri: https://github.com/xzg85586537/springboot-exaple.git
+          uri: https://github.com/xzg85586537/springcloud.git
           username: xzg85586537
           password: xiao136325220
-          search-paths: sc-config   # git仓库地址下的相对地址，可以配置多个，用,分割。
+          search-paths: /sc-config   # git仓库地址下的相对地址，可以配置多个，用,分割。
 
