@@ -8,6 +8,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
  * @Description
  * @Date 2020-06-22 18:21
  */
+
 public class SpringCloudEventListener {
     public static void main(String[] args) {
         //创建注解型的上下午配置类

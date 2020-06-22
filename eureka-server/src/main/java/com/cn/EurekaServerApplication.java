@@ -10,6 +10,7 @@ import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
  * @Description
  * @Date 2020-03-30 0:12
  */
+
 @SpringBootApplication
 @EnableEurekaServer
 public class EurekaServerApplication {
