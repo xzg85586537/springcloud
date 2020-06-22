@@ -13,7 +13,6 @@
         <module>config-server</module>
         <module>eureka-client</module>
         <module>eureka-server</module>
-        <module>config</module>
     </modules>
 
     <properties>
@@ -45,7 +44,6 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
 
     <build>
         <plugins>
