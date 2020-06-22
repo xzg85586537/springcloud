@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: config-client
+  cloud:
+    config:
+      uri: http://localhost:9190/  #配置中心的具体地址
+      profile: dev
+      label: master
+server:
+  port: 9191
