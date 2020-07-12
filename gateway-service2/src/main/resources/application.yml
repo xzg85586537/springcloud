@@ -1,0 +1,13 @@
+server:
+  port: 9001
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    service-url:
+      #这里的端口是EurekaServer端的端口
+      defaultZone: http://${eureka.instance.hostname}:9090/eureka/
+spring:
+  application:
+    name: gateway-service
+

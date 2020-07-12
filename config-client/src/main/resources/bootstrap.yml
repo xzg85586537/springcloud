@@ -4,7 +4,11 @@ spring:
   cloud:
     config:
       uri: http://localhost:9190/  #配置中心的具体地址
-      profile: dev
-      label: master
+      profile: dev  #配置文件的-符号后的名称
+      label: master  #配置文件在git的位置
+      name: springcloud  #配置文件的-符号前面的名称
 server:
   port: 9191
+
+#注意，这里配置中心的信息只能在bootstrap.yml文件配置，因为springcloud会优先读取bootstrap文件，如果
+#配置在application.yml会报错。

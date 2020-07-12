@@ -1,0 +1,406 @@
+# 端口
+server:
+  port: 8000
+
+spring:
+  profiles:
+    # 指定配置
+    # route_simple：简单尝试
+    # route_stripPrefix：截取请求
+    # route_uri：转发指定地址并传入参数
+    # route_addRequestParameter：转发指定服务并传入参数
+    # route_hystrix：熔断
+    # route_requestRateLimiter：限流
+    # route_all：综合
+    active: route_all
+
+---
+
+spring:
+  # 配置文件名称，用来标识不同环境的配置。由 spring.profiles.active 的值来决定使用哪组配置。
+  ## 简单尝试
+  profiles: route_simple
+  application:
+    # 应用名称
+    name: gateway-master
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          # 是否和服务注册与发现组件结合，设置为 true 后可以直接使用应用名称调用服务
+          enabled: true
+      # 路由（routes：路由，它由唯一标识（ID）、目标服务地址（uri）、一组断言（predicates）和一组过滤器组成（filters）。filters 不是必需参数。）
+      routes:
+        # 路由标识（id：标识，具有唯一性）   简单尝试
+        - id: route_simple
+          # 目标服务地址（uri：地址，请求转发后的地址）
+          uri: https://www.zouwencong.com
+          # 路由条件（predicates：断言，匹配 HTTP 请求内容）
+          predicates:
+            ## 转发地址格式为 uri/archive
+            - Path=/archive
+        #意思是访问http://localhost:8000/archive的话会被转发到https://www.zouwencong.com/archive
+
+eureka:
+  instance:
+    # 使用 ip 代替实例名
+    prefer-ip-address: true
+    # 实例的主机名
+    hostname: ${spring.cloud.client.ip-address}
+    # 实例的 ID 规则
+    instance-id: ${spring.cloud.client.ip-address}:${spring.application.name}:${server.port}
+  client:
+    serviceUrl:
+      # 注册中心地址
+      defaultZone: http://${eureka.instance.hostname}:9090/eureka/
+
+logging:
+  level:
+    # log 级别
+    org.springframework.cloud.gateway: debug
+
+---
+
+spring:
+  # 配置文件名称，用来标识不同环境的配置。由 spring.profiles.active 的值来决定使用哪组配置。
+  ## 截取请求
+  profiles: route_stripPrefix
+  application:
+    # 应用名称
+    name: gateway-masterw
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          # 是否和服务注册与发现组件结合，设置为 true 后可以直接使用应用名称调用服务
+          enabled: true
+      # 路由（routes：路由，它由唯一标识（ID）、目标服务地址（uri）、一组断言（predicates）和一组过滤器组成（filters）。filters 不是必需参数。）
+      routes:
+        # 路由标识（id：标识，具有唯一性）   截取请求
+        - id: route_simple
+          # 目标服务地址（uri：地址，请求转发后的地址）
+          uri: https://www.zouwencong.com
+          # 路由条件（predicates：断言，匹配 HTTP 请求内容）
+          predicates:
+            ## 转发地址格式为 uri/archive，/str 部分会被下面的过滤器给截取掉
+            - Path=/str/archive
+          filters:
+            ## 截取路径位数
+            - StripPrefix=1
+          #这里的意思是访问http://localhost:8000/str/archive的话会被转发到https://www.zouwencong.com/archive
+
+
+eureka:
+  instance:
+    # 使用 ip 代替实例名
+    prefer-ip-address: true
+    # 实例的主机名
+    hostname: ${spring.cloud.client.ip-address}
+    # 实例的 ID 规则
+    instance-id: ${spring.cloud.client.ip-address}:${spring.application.name}:${server.port}
+  client:
+    serviceUrl:
+      # 注册中心地址
+      defaultZone: http://${eureka.instance.hostname}:9090/eureka/
+
+logging:
+  level:
+    # log 级别
+    org.springframework.cloud.gateway: debug
+
+---
+
+spring:
+  # 配置文件名称，用来标识不同环境的配置。由 spring.profiles.active 的值来决定使用哪组配置。
+  ## 转发指定地址并传入参数
+  profiles: route_uri
+  application:
+    # 应用名称
+    name: gateway-master
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          # 是否和服务注册与发现组件结合，设置为 true 后可以直接使用应用名称调用服务
+          enabled: true
+      # 路由（routes：路由，它由唯一标识（ID）、目标服务地址（uri）、一组断言（predicates）和一组过滤器组成（filters）。filters 不是必需参数。）
+      routes:
+        # 路由标识（id：标识，具有唯一性）   转发指定地址并传入参数
+        - id: route_uri
+          # 目标服务地址（uri：地址，请求转发后的地址）
+          uri: http://localhost:9000
+          # 路由条件（predicates：断言，匹配 HTTP 请求内容）
+          predicates:
+            ## 匹配 GET 请求
+            - Method=GET
+          # 过滤器（filters：过滤器，过滤规则）
+          filters:
+            ## 添加指定参数
+            - AddRequestParameter=name, zwc
+      #这个的意思是访问http://localhost:8080/name的话会被转发到http://localhost:9000/name,并传入 'name=zwc' 参数（注意为 Get 请求）
+      #8080的话是网关服务的端口，里面没有提供/name的请求的，/name请求是在service1也就是9000这个端口里面有提供的
+      #此外，如果直接访问http://localhost:9000/name的话是获取不到任何信息的
+
+eureka:
+  instance:
+    # 使用 ip 代替实例名
+    prefer-ip-address: true
+    # 实例的主机名
+    hostname: ${spring.cloud.client.ip-address}
+    # 实例的 ID 规则
+    instance-id: ${spring.cloud.client.ip-address}:${spring.application.name}:${server.port}
+  client:
+    serviceUrl:
+      # 注册中心地址
+      defaultZone: http://${eureka.instance.hostname}:9090/eureka/
+
+logging:
+  level:
+    # log 级别
+    org.springframework.cloud.gateway: debug
+
+---
+
+spring:
+  # 配置文件名称，用来标识不同环境的配置。由 spring.profiles.active 的值来决定使用哪组配置。
+  ## 转发指定服务并传入参数
+  profiles: route_addRequestParameter
+  application:
+    # 应用名称
+    name: gateway-master
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          # 是否和服务注册与发现组件结合，设置为 true 后可以直接使用应用名称调用服务
+          enabled: true
+      # 路由（routes：路由，它由唯一标识（ID）、目标服务地址（uri）、一组断言（predicates）和一组过滤器组成（filters）。filters 不是必需参数。）
+      routes:
+        # 路由标识（id：标识，具有唯一性）   转发指定服务并传入参数
+        - id: route_addRequestParameter
+          # 目标服务地址（uri：地址，请求转发后的地址）
+          uri: lb://gateway-service
+          # 路由条件（predicates：断言，匹配 HTTP 请求内容）
+          predicates:
+            ## 匹配 GET 请求
+            - Method=GET
+          # 过滤器（filters：过滤器，过滤规则）
+          filters:
+            ## 添加指定参数
+            - AddRequestParameter=age, three
+
+            #这个的意思是访问http://localhost:8080/age的话会被转发到http://gateway-service/age,并传入 'name=three' 参数（注意为 Get 请求）
+            # gateway-service是服务的名称，我们把service1和service2的服务都配置成了gateway-service，格式为lb://服务名称
+            # 由于service1和service2都配置成了gateway-service,因此可以起到负载均衡的作用。
+eureka:
+  instance:
+    # 使用 ip 代替实例名
+    prefer-ip-address: true
+    # 实例的主机名
+    hostname: ${spring.cloud.client.ip-address}
+    # 实例的 ID 规则
+    instance-id: ${spring.cloud.client.ip-address}:${spring.application.name}:${server.port}
+  client:
+    serviceUrl:
+      # 注册中心地址
+      defaultZone: http://${eureka.instance.hostname}:9090/eureka/
+
+logging:
+  level:
+    # log 级别
+    org.springframework.cloud.gateway: debug
+
+---
+
+spring:
+  # 配置文件名称，用来标识不同环境的配置。由 spring.profiles.active 的值来决定使用哪组配置。
+  ## 熔断
+  profiles: route_hystrix
+  application:
+    # 应用名称
+    name: gateway-master
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          # 是否和服务注册与发现组件结合，设置为 true 后可以直接使用应用名称调用服务
+          enabled: true
+      # 路由（routes：路由，它由唯一标识（ID）、目标服务地址（uri）、一组断言（predicates）和一组过滤器组成（filters）。filters 不是必需参数。）
+      routes:
+        # 路由标识（id：标识，具有唯一性）   熔断
+        - id: route_hystrix
+          # 目标服务地址（uri：地址，请求转发后的地址）
+          uri: lb://gateway-service
+          # 路由条件（predicates：断言，匹配 HTTP 请求内容）
+          predicates:
+            ## 匹配 GET 请求
+            - Method=GET
+          # 过滤器（filters：过滤器，过滤规则）
+          filters:
+            ## 添加指定参数
+            - AddRequestParameter=age, three
+            ## 熔断
+            - name: Hystrix
+              args:
+                name: fallbackcmd
+                ### fallback 时调用的方法 http://localhost:8000/fallback
+                fallbackUri: forward:/fallback
+              #这个的意思和route_addRequestParameter是类似的，区别是多了个熔断器，当请求服务出错的时候
+              #会调用localhost:8000/fallback这个方法（网关地址/fallback）
+
+eureka:
+  instance:
+    # 使用 ip 代替实例名
+    prefer-ip-address: true
+    # 实例的主机名
+    hostname: ${spring.cloud.client.ip-address}
+    # 实例的 ID 规则
+    instance-id: ${spring.cloud.client.ip-address}:${spring.application.name}:${server.port}
+  client:
+    serviceUrl:
+      # 注册中心地址
+      defaultZone: http://${eureka.instance.hostname}:9090/eureka/
+
+logging:
+  level:
+    # log 级别
+    org.springframework.cloud.gateway: debug
+
+---
+
+spring:
+  # 配置文件名称，用来标识不同环境的配置。由 spring.profiles.active 的值来决定使用哪组配置。
+  ## 限流
+  profiles: route_requestRateLimiter
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+  application:
+    # 应用名称
+    name: gateway-master
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          # 是否和服务注册与发现组件结合，设置为 true 后可以直接使用应用名称调用服务
+          enabled: true
+      # 路由（routes：路由，它由唯一标识（ID）、目标服务地址（uri）、一组断言（predicates）和一组过滤器组成（filters）。filters 不是必需参数。）
+      routes:
+        # 路由标识（id：标识，具有唯一性）   限流
+        - id: route_requestRateLimiter
+          # 目标服务地址（uri：地址，请求转发后的地址）
+          uri: lb://gateway-service
+          # 路由条件（predicates：断言，匹配 HTTP 请求内容）
+          predicates:
+            ## 匹配 GET 请求
+            - Method=GET
+          # 过滤器（filters：过滤器，过滤规则）
+          filters:
+            ## 添加指定参数
+            - AddRequestParameter=age, three
+            ## 限流
+            - name: RequestRateLimiter
+              args:
+                ### 限流过滤器的 Bean 名称
+                key-resolver: '#{@ipKeyResolver}'
+                ### 希望允许用户每秒处理多少个请求
+                redis-rate-limiter.replenishRate: 1
+                ### 用户允许在一秒钟内完成的最大请求数
+                redis-rate-limiter.burstCapacity: 3
+          #这个的意思是访问http://localhost:8080/age的话会被转发到http://gateway-service/age,并传入 'name=three' 参数（注意为 Get 请求）
+          #gateway-service是服务的名称，我们把service1和service2的服务都配置成了gateway-service，格式为lb://服务名称
+          #此外，和redis结合使用进行限流处理，因此filter 过滤器的 name 必须为 RequestRateLimiter
+          #并且通过注入KeyResolver这个bean获取到用户的请求信息，如果用户1秒钟只能发送1个请求，如果超过的话会抛出429错误，
+          #测试的话为访问http://localhost:8080/age，然后先打开redis-server.exe和redis-cli.exe，在redis-cli.exe输入monitor，
+          #无限刷新http://localhost:8080/age这个地址，可以看到抛出429异常，redis-cli.exe会出现很多request_rate_limiter.xxx 开头的 key
+          #证明限流成功。
+
+eureka:
+  instance:
+    # 使用 ip 代替实例名
+    prefer-ip-address: true
+    # 实例的主机名
+    hostname: ${spring.cloud.client.ip-address}
+    # 实例的 ID 规则
+    instance-id: ${spring.cloud.client.ip-address}:${spring.application.name}:${server.port}
+  client:
+    serviceUrl:
+      # 注册中心地址
+      defaultZone: http://${eureka.instance.hostname}:9090/eureka/
+
+logging:
+  level:
+    # log 级别
+    org.springframework.cloud.gateway: debug
+
+---
+
+spring:
+  # 配置文件名称，用来标识不同环境的配置。由 spring.profiles.active 的值来决定使用哪组配置。
+  ## 综合
+  profiles: route_all
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+  application:
+    # 应用名称
+    name: gateway-master
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          # 是否和服务注册与发现组件结合，设置为 true 后可以直接使用应用名称调用服务
+          enabled: true
+      # 路由（routes：路由，它由唯一标识（ID）、目标服务地址（uri）、一组断言（predicates）和一组过滤器组成（filters）。filters 不是必需参数。）
+      routes:
+        # 路由标识（id：标识，具有唯一性）   综合
+        - id: route_all
+          # 目标服务地址（uri：地址，请求转发后的地址）
+          uri: lb://gateway-service
+          # 路由条件（predicates：断言，匹配 HTTP 请求内容）
+          predicates:
+            ## 转发地址格式为 uri/routeAll，/all 部分会被下面的过滤器给截取掉
+            - Path=/all/routeAll
+            ## 匹配 GET 请求
+            - Method=GET
+          # 过滤器（filters：过滤器，过滤规则）
+          filters:
+            ## 截取路径位数
+            - StripPrefix=1
+            ## 添加指定参数
+            - AddRequestParameter=pass, yes
+            ## 熔断
+            - name: Hystrix
+              args:
+                name: fallbackcmd
+                ### fallback 时调用的方法 http://localhost:8000/fallback
+                fallbackUri: forward:/fallback
+            ## 限流
+            - name: RequestRateLimiter
+              args:
+                ### 限流过滤器的 Bean 名称
+                key-resolver: '#{@ipKeyResolver}'
+                ### 希望允许用户每秒处理多少个请求
+                redis-rate-limiter.replenishRate: 1
+                ### 用户允许在一秒钟内完成的最大请求数
+                redis-rate-limiter.burstCapacity: 3
+
+eureka:
+  instance:
+    # 使用 ip 代替实例名
+    prefer-ip-address: true
+    # 实例的主机名
+    hostname: ${spring.cloud.client.ip-address}
+    # 实例的 ID 规则
+    instance-id: ${spring.cloud.client.ip-address}:${spring.application.name}:${server.port}
+  client:
+    serviceUrl:
+      # 注册中心地址
+      defaultZone: http://${eureka.instance.hostname}:9090/eureka/
+
+logging:
+  level:
+    # log 级别
+    org.springframework.cloud.gateway: debug
